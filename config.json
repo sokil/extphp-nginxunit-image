@@ -1,0 +1,65 @@
+{
+    "listeners": {
+        "*:80": {
+            "pass": "routes",
+            "client_ip": {
+                "header": "X-Forwarded-For",
+                "recursive": true,
+                "source": [
+                    "127.0.0.0/8",
+                    "10.0.0.0/8",
+                    "172.16.0.0/12"
+                ]
+            }
+        }
+    },
+
+    "routes": [
+        {
+            "match": {
+                "uri": [
+                    "*.php",
+                    "*.php/*"
+                ]
+            },
+
+            "action": {
+                "pass": "applications/api/direct"
+            }
+        },
+        {
+            "action": {
+                "share": "/var/www/public$uri",
+                "fallback": {
+                    "pass": "applications/api/index"
+                }
+            }
+        }
+    ],
+
+    "applications": {
+        "api": {
+            "type": "php",
+            "limits": {
+                "timeout": 120,
+                "requests": 5000
+            },
+            "processes": 10,
+            "options": {
+                "file": "/usr/local/etc/php/conf.d/*.ini"
+            },
+            "targets": {
+                "direct": {
+                    "root": "/var/www/public/"
+                },
+
+                "index": {
+                    "root": "/var/www/public/",
+                    "script": "index.php"
+                }
+            }
+        }
+    },
+
+    "access_log": "/dev/stdout"
+}
