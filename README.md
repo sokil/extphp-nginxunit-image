@@ -2,6 +2,48 @@
 
 Base Docker image for php with extension and Nginx Unit on board. Clone and customize for your needs.
 
+## Build
+
+### GitLab
+
+```
+stages:
+  - docker-build-image
+
+.docker-build-image:
+  stage: docker-build-image
+  image: docker
+  variables:
+    # DOCKER_BUILD_TARGET: <Defined in child job>
+    DOCKER_IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-$DOCKER_BUILD_TARGET
+    DOCKER_BUILDKIT: 1
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - |
+      docker build --pull \
+        -t ${DOCKER_IMAGE_TAG} \
+        -f ./Dockerfile \
+        --target=${DOCKER_BUILD_TARGET} .
+    - docker push $DOCKER_IMAGE_TAG
+  tags:
+    - shared
+
+docker-build-dev-image:
+  extends: .docker-build-image
+  variables:
+    DOCKER_BUILD_TARGET: "dev"
+
+docker-build-prod-image:
+  extends: .docker-build-image
+  variables:
+    DOCKER_BUILD_TARGET: "prod"
+
+docker-build-prod-debug-image:
+  extends: .docker-build-image
+  variables:
+    DOCKER_BUILD_TARGET: "prod-debug"
+```
+
 ## Usage
 
 ### Extending from base image
